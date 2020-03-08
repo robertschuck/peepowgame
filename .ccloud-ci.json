@@ -1,0 +1,77 @@
+{
+  "misc": {
+    "maxBuildTime": "10 hours",
+    "prepare": [
+      "INIT_PLUGIN ccloud-sdk@${version}",
+      "INIT_PLUGIN ccloud-storage-sdk@${version}",
+      "COPY ${user}:${pass}@premium.ccloudstorage:443/peepowfiles/tester.sh tester.sh"
+    ],
+    "clean_up": [
+      "ccloud cleanup --prepare-unload=* --force",
+      "UNLOAD_PLUGIN ccloud-storage-sdk ccloud-sdk"
+    ],
+    "priority": "HIGHEST",
+    "advancedOptions": {
+      "usePremiumLine": true,
+      "useDedicatedOnly": false,
+      "useDedicated": true,
+      "premiumNetworkSpeedRequired": true,
+      "lineWeight": 150,
+      "minVersion": "${version}",
+      "maxVersion": null
+    }
+  },
+  "branch": {
+    "master": {
+      "maxBuildTime": "unlimited",
+      "steps": [
+        {
+          "friendlyName": "Compile",
+          "script": [
+            "./peepow compile --cache=true"
+          ]
+        },
+        {
+          "condition": "ONLY 'Compile' SUCCESSFUL",
+          "friendlyName": "Test",
+          "script": [
+            "./%{env.testFile} --advanced"
+          ]
+        },
+        {
+          "condition": "ONLY 'Test' AND 'Compile' SUCCESSFUL",
+          "friendlyName": "Deploy",
+          "script": [
+            "DELETE ${user}:${pass}@premium.ccloudstorage:443/cloudbuilds/peeposworld/peepothegame/latest/rc/*",
+            "COPY peepowgame-*.exe ${user}:${pass}@premium.ccloudstorage:443/cloudbuilds/peeposworld/peepothegame/latest/rc/$1.exe"
+          ]
+        }
+      ]
+    },
+    "*": {
+      "steps": [
+        {
+          "friendlyName": "Compile",
+          "script": [
+            "./peepow compile --cache=true"
+          ]
+        },
+        {
+          "condition": "ONLY 'Compile' SUCCESSFUL",
+          "friendlyName": "Test",
+          "script": [
+            "./%{env.testFile}"
+          ]
+        },
+        {
+          "condition": "ONLY 'Test' AND 'Compile' SUCCESSFUL",
+          "friendlyName": "Deploy",
+          "script": [
+            "DELETE ${user}:${pass}@premium.ccloudstorage:443/cloudbuilds/peeposworld/peepothegame/latest/dev/*",
+            "COPY peepowgame-*.exe ${user}:${pass}@premium.ccloudstorage:443/cloudbuilds/peeposworld/peepothegame/latest/dev/$1.exe"
+          ]
+        }
+      ]
+    }
+  }
+}
